@@ -1,0 +1,16 @@
+[paths]
+source =
+   toil_cnacs
+   */toil_cnacs
+
+[run]
+source =
+    toil_cnacs
+
+omit =
+    *toil_cnacs/__main__.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:

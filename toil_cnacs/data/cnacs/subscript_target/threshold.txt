@@ -1,0 +1,6 @@
+BAF_mean_lower	0.45
+BAF_mean_upper	0.55
+BAF_coefvar_upper	0.1
+Depth_mean_lower	0.3
+Depth_mean_upper	2
+Depth_coefvar_upper	0.2

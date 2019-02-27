@@ -1,0 +1,26 @@
+# :emoji: <subject>
+
+# <body>
+
+# <footer>
+
+# emoji should be one of the following:
+# 🚀 :rocket:           new feature
+# 🐛 :bug:              bug fix
+# 📝 :memo:             changes to documentation
+# 🎨 :art:              formatting; no code change
+# 🔧 :wrench:           refactoring production code
+# ✅ :white_check_mark: adding/editing test logic
+# 👕 :shirt:            no production code change
+# 💎 :gem:              bump to new version
+
+# Subject should use impertivite tone and say what you did.
+# Subject has no capitalization nor period at the end.
+# The body should go into detail about changes made.
+# The footer should contain any JIRA issue references or actions such as:
+#   JIRA_ISSUE_KEY
+#   JIRA_ISSUE_KEY #done
+#   JIRA_ISSUE_KEY #comment This is a comment
+
+# Example
+# 🚀 add new teletransportation feature
