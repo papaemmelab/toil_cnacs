@@ -45,7 +45,7 @@ Contributions are welcome, and they are greatly appreciated, check our [contribu
 
 ## Credits
 
-Original Author: [Ryunosuke Saiki](saikiryunosuke@gmail.com)
+Original Author: [Ryunosuke Saiki](mailto:saikiryunosuke@gmail.com)
 
 This package was created using [Cookiecutter] and the
 [papaemmelab/cookiecutter-toil] project template.

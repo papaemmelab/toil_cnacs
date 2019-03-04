@@ -4,9 +4,6 @@
 
 readonly OUTPUTDIR=$1
 
-source ${CONFIG}
-source ${UTIL}
-
 TAG="${OUTPUTDIR##*/}"
 echo ${TAG}
 

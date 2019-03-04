@@ -1,12 +1,10 @@
 """toil_cnacs jobs."""
 
-from os.path import join
 import os
+from os.path import join
 
+from toil_cnacs import constants, exceptions, utils
 from toil_container import ContainerJob
-
-from toil_cnacs import constants
-from toil_cnacs import utils
 
 
 class BaseJob(ContainerJob):
@@ -59,7 +57,9 @@ class BaitSize(BaseJob):
             mode = "Exome-seq"
             subscript = "subscript_exome"
             if not self.options.gene2exon:
-                raise Exception("Exome detected but no gene2exon.bed provided!")
+                raise exceptions.MissingDataError(
+                    "Exome detected but no gene2exon.bed provided!"
+                )
 
         fileStore.logToMaster("%s mode will be applied" % mode)
         return {"mode": mode, "subscript": subscript}
@@ -186,11 +186,12 @@ class CatBafInfo(BaseJob):
 class Probe2Scale(BaseJob):
     # decide scaling factors for SNP-overlapping fragments
     def run(self, fileStore):
+        probe_dir = vars(self.options).get("probe_dir") or self.options.outdir
         self.call(
             [
                 join(constants.CNACS_DIR, "subscript_target", "probe2scale.sh"),
                 self.options.outdir,
-                join(self.options.outdir, "stats", "baf_factor.bed"),
+                join(probe_dir, "stats", "baf_factor.bed"),
                 self.sample[0],
                 os.path.basename(self.sample[0]).replace(".bam", ""),
                 constants.CNACS_DIR,
@@ -314,7 +315,9 @@ class RefInstall(BaseJob):
     def run(self, fileStore):
         threshold = join(self.options.outdir, "stats", "threshold.txt")
         if not os.path.isfile(threshold):
-            raise Exception("Output directory does not contain /stats/threshold.txt")
+            raise exceptions.MissingDataError(
+                "Output directory does not contain /stats/threshold.txt"
+            )
         self.call(
             [
                 join(
@@ -329,3 +332,139 @@ class RefInstall(BaseJob):
             ]
         )
 
+
+class Bam2Hetero(BaseJob):
+    # SNP typing
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, "subscript_target", "bam2hetero.sh"),
+                self.options.outdir,
+                self.options.snp_bed,
+                self.options.baf_info,
+                os.path.basename(self.sample[0]).replace(".bam", ""),
+                str(self.options.base_quality_threshold),
+                self.options.fasta,
+                str(self.options.upd_error),
+                constants.CNACS_DIR,
+                constants.UTIL,
+            ]
+        )
+
+
+class CorrectBaf(BaseJob):
+    # compensate for low capture efficiency of fragments containing minor alleles
+    # by fragement quartile
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, "subscript_target", "correct_baf.sh"),
+                self.options.outdir,
+                self.options.probe_bed,
+                str(self.quartile),
+                self.options.baf_factor_all,
+                os.path.basename(self.sample[0]).replace(".bam", ""),
+                constants.CNACS_DIR,
+                constants.UTIL,
+            ]
+        )
+
+
+class CorrectGC(BaseJob):
+    # GC bias correction
+    # by fragment quartile
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, self.mode["subscript"], "correct_gc.sh"),
+                self.options.outdir,
+                self.options.probe_bed,
+                str(self.quartile),
+                self.options.bait_fa,
+                os.path.basename(self.sample[0]).replace(".bam", ""),
+                str(self.options.max_frag_length),
+                self.par_bed,
+                constants.CNACS_DIR,
+                constants.UTIL,
+            ]
+        )
+
+
+class CorrectLength(BaseJob):
+    # correct fragment length bias
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, "subscript_target", "correct_length.sh"),
+                self.options.outdir,
+                os.path.basename(self.sample[0]).replace(".bam", ""),
+                constants.CNACS_DIR,
+                constants.UTIL,
+            ]
+        )
+
+
+class CorrectWGA(BaseJob):
+    # correct wga bias
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, "subscript_target", "correct_wga.sh"),
+                self.options.outdir,
+                self.options.bait_gc,
+                os.path.basename(self.sample[0]).replace(".bam", ""),
+                constants.CNACS_DIR,
+                constants.UTIL,
+            ]
+        )
+
+
+class CNACSMain(BaseJob):
+    # filter out low quality probes
+    # make appropriate signals for control from control samples
+    # calculate signals for CBS
+    # perform CBS
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, self.mode["subscript"], "cnacs_main.sh"),
+                self.options.outdir,
+                self.options.baf_info,
+                self.options.baf_factor,
+                self.options.baf_factor_all,
+                self.options.all_depth,
+                self.options.rep_time,
+                os.path.basename(self.sample[0]).replace(".bam", ""),
+                str(self.options.cbs_alpha_baf),
+                str(self.options.cbs_alpha_dep),
+                self.par_bed,
+                constants.CNACS_DIR,
+                constants.UTIL,
+            ]
+        )
+
+
+class Plot(BaseJob):
+    # draw a plot
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, self.mode["subscript"], "plot.sh"),
+                self.options.outdir,
+                os.path.basename(self.sample[0]).replace(".bam", ""),
+                self.cytoband_dir,
+                constants.CNACS_DIR,
+                constants.UTIL,
+            ]
+        )
+
+
+class CatResult(BaseJob):
+    # join result files
+    def run(self, fileStore):
+        self.call(
+            [
+                join(constants.CNACS_DIR, "subscript_target", "cat_result.sh"),
+                self.options.outdir,
+            ]
+        )

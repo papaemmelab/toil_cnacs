@@ -3,17 +3,14 @@
 #$ -cwd
 
 readonly OUTPUTDIR=$1
+readonly ID=$2
+readonly CYTOBAND_DIR=$3
+readonly COMMAND_CNACS=$4
+readonly UTIL=$5
 
-source ${CONFIG}
 source ${UTIL}
 
-check_num_args $# 1
-
-# readonly SEQBAM=`head -n ${SGE_TASK_ID} ${OUTPUTDIR}/bam_list.txt | tail -n 1`
-readonly SEQBAM=`head -n ${LSB_JOBINDEX} ${OUTPUTDIR}/bam_list.txt | tail -n 1`
-TMP_ID="${SEQBAM##*/}"
-ID=`echo ${TMP_ID} | sed -e "s/\.bam//"`
-
+check_num_args $# 5
 
 readonly INPUT=${OUTPUTDIR}/${ID}/${ID}_signal.txt
 readonly SEGMENT=${OUTPUTDIR}/${ID}/${ID}_result.txt
@@ -26,28 +23,33 @@ readonly CENTROMERE=${CYTOBAND_DIR}/centromere_pos.txt
 
 
 # draw figures
-echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_input_all.pl ${INPUT} ${SEGMENT} ${BAF} ${INPUT}.tmp ${SEGMENT}.tmp"
-${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_input_all.pl ${INPUT} ${SEGMENT} ${BAF} ${INPUT}.tmp ${SEGMENT}.tmp
+CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_input_all.pl ${INPUT} ${SEGMENT} ${BAF} ${INPUT}.tmp ${SEGMENT}.tmp"
+echo ${CMD}
+eval ${CMD}
 
-echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_input_chr.pl ${INPUT} ${SEGMENT} ${BAF} ${INPUT}.tmp2 ${SEGMENT}.tmp2"
-${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_input_chr.pl ${INPUT} ${SEGMENT} ${BAF} ${INPUT}.tmp2 ${SEGMENT}.tmp2
+CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_input_chr.pl ${INPUT} ${SEGMENT} ${BAF} ${INPUT}.tmp2 ${SEGMENT}.tmp2"
+echo ${CMD}
+eval ${CMD}
 
 
-echo "${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_ALL} < ${COMMAND_CNACS}/subscript_target/plot_all.R"
-${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_ALL} < ${COMMAND_CNACS}/subscript_target/plot_all.R
+CMD="${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_ALL} < ${COMMAND_CNACS}/subscript_target/plot_all.R"
+echo ${CMD}
+eval ${CMD}
 
 MAX=`cut -f 3 ${INPUT} | sort -n | tail -n 1`
 if [ ${MAX%.*} -gt 3 ]; then
 	readonly OUTPUT_SCALED=${OUTPUTDIR}/${ID}/${ID}_scaled.pdf
 
-	echo "${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_SCALED} < ${COMMAND_CNACS}/subscript_target/plot_scaled.R"
-	${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_SCALED} < ${COMMAND_CNACS}/subscript_target/plot_scaled.R
+	CMD="${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_SCALED} < ${COMMAND_CNACS}/subscript_target/plot_scaled.R"
+	echo ${CMD}
+	eval ${CMD}
 fi
 
 for i in `seq 1 23`
 do
-	echo "${R_PATH} --vanilla --slave --args ${INPUT}.tmp2 ${SEGMENT}.tmp2 ${CYTOBAND} ${OUTPUT_CHR}${i}.pdf ${i} < ${COMMAND_CNACS}/subscript_target/plot_chr.R"
-	${R_PATH} --vanilla --slave --args ${INPUT}.tmp2 ${SEGMENT}.tmp2 ${CYTOBAND} ${OUTPUT_CHR}${i}.pdf ${i} < ${COMMAND_CNACS}/subscript_target/plot_chr.R
+	CMD="${R_PATH} --vanilla --slave --args ${INPUT}.tmp2 ${SEGMENT}.tmp2 ${CYTOBAND} ${OUTPUT_CHR}${i}.pdf ${i} < ${COMMAND_CNACS}/subscript_target/plot_chr.R"
+	echo ${CMD}
+	eval ${CMD}
 done
 
 echo "rm ${INPUT}.tmp"

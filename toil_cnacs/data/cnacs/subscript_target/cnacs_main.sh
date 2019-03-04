@@ -8,17 +8,16 @@ readonly BAF_FACTOR=$3
 readonly BAF_FACTOR_ALL=$4
 readonly ALL_DEPTH=$5
 readonly REP_TIME=$6
+readonly ID=$7
+readonly CBS_ALPHA_BAF=$8
+readonly CBS_ALPHA_DEP=$9
+readonly PAR_BED=${10}
+readonly COMMAND_CNACS=${11}
+readonly UTIL=${12}
 
-source ${CONFIG}
 source ${UTIL}
 
-check_num_args $# 6
-
-
-# readonly SEQBAM=`head -n ${SGE_TASK_ID} ${OUTPUTDIR}/bam_list.txt | tail -n 1`
-readonly SEQBAM=`head -n ${LSB_JOBINDEX} ${OUTPUTDIR}/bam_list.txt | tail -n 1`
-TMP_ID="${SEQBAM##*/}"
-ID=`echo ${TMP_ID} | sed -e "s/\.bam//"`
+check_num_args $# 12
 
 readonly STATSDIR=`dirname ${BAF_INFO}`
 readonly GENE_INFO=${STATSDIR}/gene_info.txt
@@ -26,20 +25,22 @@ readonly GENE_INFO=${STATSDIR}/gene_info.txt
 
 # filter out low-quality probes
 # make an input file for CBS (BAF)
-echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input.pl ${OUTPUTDIR}/${ID}/tmp/combined_normdep.txt ${OUTPUTDIR}/${ID}/tmp/adjusted_baf.txt ${BAF_INFO} ${BAF_FACTOR} ${BAF_FACTOR_ALL} ${ALL_DEPTH} ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/baf_input.csv ${OUTPUTDIR}/${ID}/tmp/baf_all.txt"
-${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input.pl ${OUTPUTDIR}/${ID}/tmp/combined_normdep.txt ${OUTPUTDIR}/${ID}/tmp/adjusted_baf.txt ${BAF_INFO} ${BAF_FACTOR} ${BAF_FACTOR_ALL} ${ALL_DEPTH} ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/baf_input.csv ${OUTPUTDIR}/${ID}/tmp/baf_all.txt
+CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input.pl ${OUTPUTDIR}/${ID}/tmp/combined_normdep.txt ${OUTPUTDIR}/${ID}/tmp/adjusted_baf.txt ${BAF_INFO} ${BAF_FACTOR} ${BAF_FACTOR_ALL} ${ALL_DEPTH} ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/baf_input.csv ${OUTPUTDIR}/${ID}/tmp/baf_all.txt"
+echo ${CMD}
+eval ${CMD}
 check_error $?
 
 
 # circular binary segmentation (BAF)
-echo "${R_PATH} --vanilla --slave --args ${ID} ${OUTPUTDIR}/${ID}/tmp/baf_input.csv ${OUTPUTDIR}/${ID}/tmp/segment_baf.txt ${CBS_ALPHA_BAF} < ${COMMAND_CNACS}/subscript_target/cbs.R"
-${R_PATH} --vanilla --slave --args ${ID} ${OUTPUTDIR}/${ID}/tmp/baf_input.csv ${OUTPUTDIR}/${ID}/tmp/segment_baf.txt ${CBS_ALPHA_BAF} < ${COMMAND_CNACS}/subscript_target/cbs.R
+CMD="${R_PATH} --vanilla --slave --args ${ID} ${OUTPUTDIR}/${ID}/tmp/baf_input.csv ${OUTPUTDIR}/${ID}/tmp/segment_baf.txt ${CBS_ALPHA_BAF} < ${COMMAND_CNACS}/subscript_target/cbs.R"
+echo ${CMD}
+eval ${CMD}
 check_error $?
 
-echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/seg2bed.pl ${OUTPUTDIR}/${ID}/tmp/segment_baf.txt \
+CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/seg2bed.pl ${OUTPUTDIR}/${ID}/tmp/segment_baf.txt \
 > ${OUTPUTDIR}/${ID}/tmp/segment_baf.bed"
-${PERL_PATH} ${COMMAND_CNACS}/subscript_target/seg2bed.pl ${OUTPUTDIR}/${ID}/tmp/segment_baf.txt \
-> ${OUTPUTDIR}/${ID}/tmp/segment_baf.bed
+echo ${CMD}
+eval ${CMD}
 check_error $?
 
 
@@ -68,60 +69,62 @@ do
 
 	# make temporary control signals from control samples
 	# calculate temporary signals for CBS
-	echo "${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/current_depth.txt ${ALL_DEPTH} ${ID} ${OUTPUTDIR}/${ID}/tmp/signal_tmp.txt ${OUTPUTDIR}/${ID}/tmp/signal_dip.txt ${OUTPUTDIR}/${ID}/tmp/control_depth.tmp.txt ${OUTPUTDIR}/${ID}/tmp/control_info.tmp.txt < ${COMMAND_CNACS}/subscript_target/make_control.R"
-	${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/current_depth.txt ${ALL_DEPTH} ${ID} ${OUTPUTDIR}/${ID}/tmp/signal_tmp.txt ${OUTPUTDIR}/${ID}/tmp/signal_dip.txt ${OUTPUTDIR}/${ID}/tmp/control_depth.tmp.txt ${OUTPUTDIR}/${ID}/tmp/control_info.tmp.txt < ${COMMAND_CNACS}/subscript_target/make_control.R
+	CMD="${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/current_depth.txt ${ALL_DEPTH} ${ID} ${OUTPUTDIR}/${ID}/tmp/signal_tmp.txt ${OUTPUTDIR}/${ID}/tmp/signal_dip.txt ${OUTPUTDIR}/${ID}/tmp/control_depth.tmp.txt ${OUTPUTDIR}/${ID}/tmp/control_info.tmp.txt < ${COMMAND_CNACS}/subscript_target/make_control.R"
+	echo ${CMD}
+	eval ${CMD}
 	check_error $?
 
 
 	# correct differences in replication timing
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/reptime2depth.pl ${OUTPUTDIR}/${ID}/tmp/signal_tmp.txt ${REP_TIME} \
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/reptime2depth.pl ${OUTPUTDIR}/${ID}/tmp/signal_tmp.txt ${REP_TIME} \
 	> ${OUTPUTDIR}/${ID}/tmp/reptime2depth.txt"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/reptime2depth.pl ${OUTPUTDIR}/${ID}/tmp/signal_tmp.txt ${REP_TIME} \
-	> ${OUTPUTDIR}/${ID}/tmp/reptime2depth.txt
+	echo ${CMD}
+	eval ${CMD}
 
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/reptime2depth.pl ${OUTPUTDIR}/${ID}/tmp/signal_dip.txt ${REP_TIME} \
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/reptime2depth.pl ${OUTPUTDIR}/${ID}/tmp/signal_dip.txt ${REP_TIME} \
 	> ${OUTPUTDIR}/${ID}/tmp/reptime2depth_dip.txt"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/reptime2depth.pl ${OUTPUTDIR}/${ID}/tmp/signal_dip.txt ${REP_TIME} \
-	> ${OUTPUTDIR}/${ID}/tmp/reptime2depth_dip.txt
+	echo ${CMD}
+	eval ${CMD}
 
-	echo "${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/reptime2depth.txt ${OUTPUTDIR}/${ID}/tmp/reptime2depth_dip.txt ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.txt ${OUTPUTDIR}/${ID}/tmp/reptime2depth.pdf < ${COMMAND_CNACS}/subscript_target/adjust_reptime.R"
+	CMD="${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/reptime2depth.txt ${OUTPUTDIR}/${ID}/tmp/reptime2depth_dip.txt ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.txt ${OUTPUTDIR}/${ID}/tmp/reptime2depth.pdf < ${COMMAND_CNACS}/subscript_target/adjust_reptime.R"
 	${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/reptime2depth.txt ${OUTPUTDIR}/${ID}/tmp/reptime2depth_dip.txt ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.txt ${OUTPUTDIR}/${ID}/tmp/reptime2depth.pdf < ${COMMAND_CNACS}/subscript_target/adjust_reptime.R
 
 
 	# make an input file for CBS (depth)
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input_CBS.pl ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.txt \
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input_CBS.pl ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.txt \
 	> ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input_CBS.pl ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.txt \
-	> ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv
+	echo ${CMD}
+	eval ${CMD}
 
 
 	# circular binary segmentation (depth)
-	echo "${R_PATH} --vanilla --slave --args ${ID} ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv ${OUTPUTDIR}/${ID}/tmp/segment_depth.txt ${CBS_ALPHA_DEP} < ${COMMAND_CNACS}/subscript_target/cbs.R"
-	${R_PATH} --vanilla --slave --args ${ID} ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv ${OUTPUTDIR}/${ID}/tmp/segment_depth.txt ${CBS_ALPHA_DEP} < ${COMMAND_CNACS}/subscript_target/cbs.R
+	CMD="${R_PATH} --vanilla --slave --args ${ID} ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv ${OUTPUTDIR}/${ID}/tmp/segment_depth.txt ${CBS_ALPHA_DEP} < ${COMMAND_CNACS}/subscript_target/cbs.R"
+	echo ${CMD}
+	eval ${CMD}
 	check_error $?
 
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/seg2bed.pl ${OUTPUTDIR}/${ID}/tmp/segment_depth.txt \
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/seg2bed.pl ${OUTPUTDIR}/${ID}/tmp/segment_depth.txt \
 	> ${OUTPUTDIR}/${ID}/tmp/segment_depth.bed
 	check_error $?"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/seg2bed.pl ${OUTPUTDIR}/${ID}/tmp/segment_depth.txt \
-	> ${OUTPUTDIR}/${ID}/tmp/segment_depth.bed
+	echo ${CMD}
+	eval ${CMD}
 	check_error $?
 
 
 	# merge signals of depth and BAF
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/merge_signals.pl ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv ${OUTPUTDIR}/${ID}/tmp/baf_input.csv \
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/merge_signals.pl ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv ${OUTPUTDIR}/${ID}/tmp/baf_input.csv \
 	> ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/merge_signals.pl ${OUTPUTDIR}/${ID}/tmp/signal_adjusted.csv ${OUTPUTDIR}/${ID}/tmp/baf_input.csv \
-	> ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt
+	echo ${CMD}
+	eval ${CMD}
 
 
 	# define diploid regions
 	if [ ${LOOP} -eq 1 ]; then
 		export R_LIBS=${R_LIBS_PATH}
 
-		echo "${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${OUTPUTDIR}/${ID}/${ID}_diploid_region.txt < ${COMMAND_CNACS}/subscript_target/define_diploid.R"
-		${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${OUTPUTDIR}/${ID}/${ID}_diploid_region.txt < ${COMMAND_CNACS}/subscript_target/define_diploid.R
-		check_error $?
+		CMD="${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${OUTPUTDIR}/${ID}/${ID}_diploid_region.txt < ${COMMAND_CNACS}/subscript_target/define_diploid.R"
+		echo ${CMD}
+		eval ${CMD}
 	fi
 
 
@@ -129,72 +132,74 @@ do
 	echo "cat ${OUTPUTDIR}/${ID}/tmp/segment_depth.bed >> ${OUTPUTDIR}/${ID}/tmp/segment_tmp.bed"
 	cat ${OUTPUTDIR}/${ID}/tmp/segment_depth.bed >> ${OUTPUTDIR}/${ID}/tmp/segment_tmp.bed
 
-	echo "${BEDTOOLS_PATH}/sortBed -i ${OUTPUTDIR}/${ID}/tmp/segment_tmp.bed | \
+	CMD="${BEDTOOLS_PATH}/sortBed -i ${OUTPUTDIR}/${ID}/tmp/segment_tmp.bed | \
 	${BEDTOOLS_PATH}/mergeBed -i stdin | \
 	${BEDTOOLS_PATH}/intersectBed -a stdin -b ${OUTPUTDIR}/${ID}/tmp/segment_tmp.bed -wa -wb | sort -u | \
 	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/merge_seg.pl ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt \
 	> ${OUTPUTDIR}/${ID}/tmp/segment_tmp_pre.txt"
-	${BEDTOOLS_PATH}/sortBed -i ${OUTPUTDIR}/${ID}/tmp/segment_tmp.bed | \
-	${BEDTOOLS_PATH}/mergeBed -i stdin | \
-	${BEDTOOLS_PATH}/intersectBed -a stdin -b ${OUTPUTDIR}/${ID}/tmp/segment_tmp.bed -wa -wb | sort -u | \
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/merge_seg.pl ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt \
-	> ${OUTPUTDIR}/${ID}/tmp/segment_tmp_pre.txt
+	echo ${CMD}
+	eval ${CMD}
 
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_end.pl ${OUTPUTDIR}/${ID}/tmp/segment_tmp_pre.txt ${ID} \
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_end.pl ${OUTPUTDIR}/${ID}/tmp/segment_tmp_pre.txt ${ID} \
 	> ${OUTPUTDIR}/${ID}/tmp/segment_pre.txt"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/proc_end.pl ${OUTPUTDIR}/${ID}/tmp/segment_tmp_pre.txt ${ID} \
-	> ${OUTPUTDIR}/${ID}/tmp/segment_pre.txt
+	echo ${CMD}
+	eval ${CMD}
 
 
 	# filter candidate CNAs
-	echo "${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/segment_pre.txt ${OUTPUTDIR}/${ID}/tmp/segment_tmp.txt < ${COMMAND_CNACS}/subscript_target/filt_cna.R"
-	${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/segment_pre.txt ${OUTPUTDIR}/${ID}/tmp/segment_tmp.txt < ${COMMAND_CNACS}/subscript_target/filt_cna.R
+	CMD="${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/segment_pre.txt ${OUTPUTDIR}/${ID}/tmp/segment_tmp.txt < ${COMMAND_CNACS}/subscript_target/filt_cna.R"
+	echo ${CMD}
+	eval ${CMD}
 
 
 	# depth normalization using depth of diploid regions
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/norm_depth_cnacs.pl ${OUTPUTDIR}/${ID}/${ID}_diploid_region.txt ${OUTPUTDIR}/${ID}/tmp/segment_tmp.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${GENE_INFO} ${PAR_BED} ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/summary.txt"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/norm_depth_cnacs.pl ${OUTPUTDIR}/${ID}/${ID}_diploid_region.txt ${OUTPUTDIR}/${ID}/tmp/segment_tmp.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${GENE_INFO} ${PAR_BED} ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/summary.txt
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/norm_depth_cnacs.pl ${OUTPUTDIR}/${ID}/${ID}_diploid_region.txt ${OUTPUTDIR}/${ID}/tmp/segment_tmp.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${GENE_INFO} ${PAR_BED} ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/summary.txt"
+	echo ${CMD}
+	eval ${CMD}
 	check_error $?
 
 	# difference from a former loop
 	if [ ${LOOP} -gt 1 ]; then
 		echo -n > ${OUTPUTDIR}/${ID}/tmp/diff.txt
 
-		echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/compare_result.pl ${OUTPUTDIR}/${ID}/tmp/result_pre.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt >> ${OUTPUTDIR}/${ID}/tmp/diff.txt"
-		${PERL_PATH} ${COMMAND_CNACS}/subscript_target/compare_result.pl ${OUTPUTDIR}/${ID}/tmp/result_pre.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt >> ${OUTPUTDIR}/${ID}/tmp/diff.txt
+		CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/compare_result.pl ${OUTPUTDIR}/${ID}/tmp/result_pre.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt >> ${OUTPUTDIR}/${ID}/tmp/diff.txt"
+		echo ${CMD}
+		eval ${CMD}
 		check_error $?
 	fi
 
 	# make an input file for a next step
-	echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input_recursion.pl ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt\
+	CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input_recursion.pl ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt\
 	> ${OUTPUTDIR}/${ID}/tmp/current_depth.txt"
-	${PERL_PATH} ${COMMAND_CNACS}/subscript_target/make_input_recursion.pl ${OUTPUTDIR}/${ID}/tmp/depth_input.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt\
-	> ${OUTPUTDIR}/${ID}/tmp/current_depth.txt
+	echo ${CMD}
+	eval ${CMD}
 	check_error $?
 done
 
 
 # filter CNAs
-echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/filt_cna.pl ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt \
+CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/filt_cna.pl ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt \
 > ${OUTPUTDIR}/${ID}/tmp/result_tmp2.txt"
-${PERL_PATH} ${COMMAND_CNACS}/subscript_target/filt_cna.pl ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp.txt \
-> ${OUTPUTDIR}/${ID}/tmp/result_tmp2.txt
+echo ${CMD}
+eval ${CMD}
 
 
 # additional CNAs
-echo "${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${OUTPUTDIR}/${ID}/tmp/cna_region.txt ${OUTPUTDIR}/${ID}/${ID}_scatter_plot.pdf < ${COMMAND_CNACS}/subscript_target/add_cna.R"
-${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${OUTPUTDIR}/${ID}/tmp/cna_region.txt ${OUTPUTDIR}/${ID}/${ID}_scatter_plot.pdf < ${COMMAND_CNACS}/subscript_target/add_cna.R
+CMD="${R_PATH} --vanilla --slave --args ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${OUTPUTDIR}/${ID}/tmp/cna_region.txt ${OUTPUTDIR}/${ID}/${ID}_scatter_plot.pdf < ${COMMAND_CNACS}/subscript_target/add_cna.R"
+echo ${CMD}
+eval ${CMD}
 check_error $?
 
-echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/add_cna.pl ${OUTPUTDIR}/${ID}/tmp/result_tmp2.txt ${OUTPUTDIR}/${ID}/tmp/cna_region.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${GENE_INFO} ${ID}\
+CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/add_cna.pl ${OUTPUTDIR}/${ID}/tmp/result_tmp2.txt ${OUTPUTDIR}/${ID}/tmp/cna_region.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${GENE_INFO} ${ID}\
 > ${OUTPUTDIR}/${ID}/tmp/result_tmp3.txt"
-${PERL_PATH} ${COMMAND_CNACS}/subscript_target/add_cna.pl ${OUTPUTDIR}/${ID}/tmp/result_tmp2.txt ${OUTPUTDIR}/${ID}/tmp/cna_region.txt ${OUTPUTDIR}/${ID}/tmp/merged_signal.txt ${GENE_INFO} ${ID}\
-> ${OUTPUTDIR}/${ID}/tmp/result_tmp3.txt
+echo ${CMD}
+eval ${CMD}
 
 
 # additional UPDs
-echo "${PERL_PATH} ${COMMAND_CNACS}/subscript_target/add_upd.pl ${OUTPUTDIR}/${ID}/tmp/baf_all.txt ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp3.txt ${ID} ${GENE_INFO} > ${OUTPUTDIR}/${ID}/${ID}_result.txt"
-${PERL_PATH} ${COMMAND_CNACS}/subscript_target/add_upd.pl ${OUTPUTDIR}/${ID}/tmp/baf_all.txt ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp3.txt ${ID} ${GENE_INFO} > ${OUTPUTDIR}/${ID}/${ID}_result.txt
+CMD="${PERL_PATH} ${COMMAND_CNACS}/subscript_target/add_upd.pl ${OUTPUTDIR}/${ID}/tmp/baf_all.txt ${OUTPUTDIR}/${ID}/tmp/proc_signal.txt ${OUTPUTDIR}/${ID}/tmp/result_tmp3.txt ${ID} ${GENE_INFO} > ${OUTPUTDIR}/${ID}/${ID}_result.txt"
+echo ${CMD}
+eval ${CMD}
 
 
 echo "rm ${OUTPUTDIR}/${ID}/tmp/depth_input.txt"

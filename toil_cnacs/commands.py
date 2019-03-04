@@ -9,6 +9,7 @@ from toil_container import ContainerJob
 def run_toil(toil_options, step):
     """Run toil pipeline give an options namespace."""
     if step == "generate_pool":
+        utils.make_dir(toil_options.outdir)
         head = jobs.BaseJob(runtime=89, cores=1, memory="1G", options=toil_options)
         baitsize = jobs.BaitSize(runtime=89, cores=1, memory="1G", options=toil_options)
         preprocess = jobs.Preprocess(
@@ -180,7 +181,128 @@ def run_toil(toil_options, step):
         head = baitsize
 
     if step == "run":
-        raise Exception("Working on it")
+        utils.make_dir(toil_options.outdir)
+        head = jobs.BaseJob(runtime=89, cores=1, memory="1G", options=toil_options)
+        baitsize = jobs.BaitSize(runtime=89, cores=1, memory="1G", options=toil_options)
+        head.addChild(baitsize)
+
+        for samp in toil_options.samples:
+            cnacs_kwargs = {"sample": [samp], "mode": baitsize.rv()}
+            proc_bam = jobs.ProcBam(
+                runtime=89,
+                cores=1,
+                memory="8G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            baitsize.addChild(proc_bam)
+            divide_bed = jobs.DivideBed(
+                runtime=89,
+                cores=1,
+                memory="1G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            count_dup = jobs.CountDup(
+                runtime=89,
+                cores=1,
+                memory="1G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            bam2hetero = jobs.Bam2Hetero(
+                runtime=89,
+                cores=1,
+                memory="1G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            probe2scale = jobs.Probe2Scale(
+                runtime=89,
+                cores=1,
+                memory="1G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            bam2hetero.addChild(probe2scale)
+            for quartile in [1, 2, 3, 4]:
+                cnacs_kwargs["quartile"] = quartile
+                correct_baf = jobs.CorrectBaf(
+                    runtime=89,
+                    cores=1,
+                    memory="1G",
+                    options=toil_options,
+                    cnacs_kwargs=cnacs_kwargs,
+                )
+                probe2scale.addChild(correct_baf)
+                correct_gc = jobs.CorrectGC(
+                    runtime=89,
+                    cores=1,
+                    memory="6G",
+                    options=toil_options,
+                    cnacs_kwargs=cnacs_kwargs,
+                )
+                divide_bed.addChild(correct_gc)
+            plot_gc = jobs.PlotGC(
+                runtime=89,
+                cores=1,
+                memory="1G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            divide_bed.addFollowOn(plot_gc)
+            proc_bam.addChild(divide_bed)
+            proc_bam.addChild(count_dup)
+            proc_bam.addChild(bam2hetero)
+            correct_length = jobs.CorrectLength(
+                runtime=89,
+                cores=1,
+                memory="1G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            proc_bam.addFollowOn(correct_length)
+            if toil_options.flg_repliG:
+                correct_wga = jobs.CorrectWGA(
+                    runtime=89,
+                    cores=1,
+                    memory="2G",
+                    options=toil_options,
+                    cnacs_kwargs=cnacs_kwargs,
+                )
+                correct_length.add_child(correct_wga)
+            if baitsize.rv("mode") == "Exome-seq":
+                gene_depth = jobs.GeneDepth(
+                    runtime=89,
+                    cores=1,
+                    memory="4G",
+                    options=toil_options,
+                    cnacs_kwargs=cnacs_kwargs,
+                )
+                if toil_options.flg_repliG:
+                    correct_wga.addChild(gene_depth)
+                else:
+                    correct_length.addChild(gene_depth)
+            cnacs_main = jobs.CNACSMain(
+                runtime=89,
+                cores=1,
+                memory="2G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            correct_length.addFollowOn(cnacs_main)
+            plot = jobs.Plot(
+                runtime=89,
+                cores=1,
+                memory="2G",
+                options=toil_options,
+                cnacs_kwargs=cnacs_kwargs,
+            )
+            cnacs_main.addFollowOn(plot)
+        cat_result = jobs.CatResult(
+            runtime=89, cores=1, memory="1G", options=toil_options
+        )
+        head.addFollowOn(cat_result)
 
     ContainerJob.Runner.startToil(head, toil_options)
 
