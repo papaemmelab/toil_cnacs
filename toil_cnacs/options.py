@@ -40,7 +40,6 @@ def get_parser(step):
     settings.add_argument(
         "--db_dir",
         help="cnacs database dir",
-        required=True,
         type=click.Path(exists=True, dir_okay=True, readable=True, resolve_path=True),
     )
 
@@ -174,6 +173,14 @@ def process_parsed_options(options, step):
     if options.writeLogs is not None:
         subprocess.check_call(["mkdir", "-p", options.writeLogs])
 
+    if not (options.docker or options.singularity):
+        if not options.db_dir:
+            raise exceptions.MissingDataError(
+                "Database dir must be provided with --db_dir if not run in the container"
+            )
+    else:
+        options.db_dir = "/ref/db"
+
     if vars(options).get("pool_samp"):
         valid_samples = [
             [
@@ -215,6 +222,10 @@ def process_parsed_options(options, step):
         if vars(options).get("samp_file"):
             with open(options.samp_file) as f:
                 samples.extend(f.read().splitlines())
+        samples = [
+            click.Path(file_okay=True, readable=True, resolve_path=True)(samp)
+            for samp in samples
+        ]
 
         if not samples:
             raise exceptions.MissingRequirementError("No samples passed!")
