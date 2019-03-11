@@ -9,35 +9,101 @@
 
 toil pipeline for CNACS
 
+## Contents
+
+- [Contents](#contents)
+- [Usage](#usage)
+    - [Installation](#installation)
+    - [Generate Pool of Normals](#generate-pool-of-normals)
+    - [Finalise Pool of Normals](#finalise-pool-of-normals)
+    - [Run CN Analysis](#run-cn-analysis)
+- [Contributing](#contributing)
+
 ## Usage
 
-This package uses docker to manage its dependencies, there are 2 ways of using it:
+`toil_cnacs` CLI is divided into 3 steps; `generate_pool`, `finalise_pool`, and `run`.
 
-1. Running the [container][docker_base] in single machine mode without [`--batchSystem`] support:
+* `generate_pool` to create the reference files for a pool of normals
+* `finalise_pool` to confirm the thresholds for a pool of normals
+* `run` to run copy number analysis for tumor samples
 
-        # using docker
-        docker run -it papaemmelab/toil_cnacs --help
+Notice its required that you use a different jobstore for each sub-command, please see:
 
-        # using singularity
-        singularity run docker://papaemmelab/toil_cnacs --help
+    toil_cnacs --help
 
-1. Installing the python package from [pypi][pypi_base] and passing the container as a flag:
+*Currently only Targeted Panels and hg19 bed and fasta files are supported*
+*Bam files can be gr37 or hg19*
 
-        # install package
-        pip install toil_cnacs
+Docker and Singularity are supported:
 
-        # run with docker
-        toil_cnacs [TOIL-OPTIONS] [PIPELINE-OPTIONS]
-            --docker papaemmelab/toil_cnacs
-            --volumes <local path> <container path>
-            --batchSystem LSF
+    # run with docker
+    toil_cnacs [STEP] [TOIL-OPTIONS] [PIPELINE-OPTIONS]
+        --docker papaemmelab/docker-cnacs
+        --volumes <local path> <container path>
 
-        # run with singularity
-        toil_cnacs [TOIL-OPTIONS] [PIPELINE-OPTIONS]
-            --singularity docker://papaemmelab/toil_cnacs
-            --volumes <local path> <container path>
-            --batchSystem LSF
-See [docker2singularity] if you want to use a [singularity] image instead of using the `docker://` prefix.
+    # run with singularity
+    toil_cnacs [STEP] [TOIL-OPTIONS] [PIPELINE-OPTIONS]
+        --singularity docker://papaemmelab/docker-cnacs
+        --volumes <local path> <container path>
+
+### Installation
+
+To install:
+
+    git clone git@github.com:papaemmelab/toil_cnacs.git
+    cd toil_cnacs
+    pip install .
+
+### Generate Pool of Normals
+This subfunction will allow you to create pool of normals for a specific panel.
+Use 5-10 normal samples of varying gender.
+Example:
+
+    toil_cnacs generate_pool \
+        {pool_dir}/jobstore_generate_pool \
+        --stats \
+        --writeLogs {pool_dir}/toil_logs \
+        --logFile {pool_dir}/toil_logs.txt \
+        --outdir {pool_dir} \
+        --probe_bed {hg19 panel bed} \
+        --fasta {hg19 reference fasta} \
+        --pool_samp {normal1 bam} {normal1 gender} \
+        --pool_samp {normal2 bam} {normal2 gender} \
+        ...
+
+Once you have generated your pool, use the pdf images in outdir/stats to the thresholds
+in outdir/stats/threshold.txt
+
+### Finalise Pool of Normals
+This subfunction will finalise your thresholds for your pool of normals.
+Be sure that you have gone through the images in outdir/stats and set the thresholds
+in outdir/stats/threshold.txt
+
+    toil_cnacs finalise_pool \
+        {pool_dir}/jobstore_finalise_pool \
+        --stats \
+        --writeLogs {pool_dir}/toil_logs \
+        --logFile {pool_dir}/toil_logs.txt \
+        --outdir {pool_dir} \
+        --probe_bed {hg19 panel bed} \
+        --fasta {hg19 reference fasta}
+
+### Run CN Analysis
+After you have generated and finalised your pool of normals for your panel,
+you can run the main pipeline on any number of tumors. Make sure to set pool_dir
+to the location of your pool output directory
+`--samp` flag can be used to specify tumor bams and/or `--samp_file` can be used to pass a file with a list of bams.
+
+    toil_cnacs run \
+        {outdir}/jobstore \
+        --stats \
+        --writeLogs {outdir}/toil_logs \
+        --logFile {outdir}/toil_logs.txt \
+        --outdir {outdir} \
+        --pool_dir {pool_dir} \
+        --probe_bed {hg19 panel bed} \
+        --fasta {hg19 reference fasta} \
+        --samp {tumor1 bam}
 
 ## Contributing
 
@@ -45,7 +111,7 @@ Contributions are welcome, and they are greatly appreciated, check our [contribu
 
 ## Credits
 
-Original Author: [Ryunosuke Saiki](mailto:saikiryunosuke@gmail.com)
+CNACS Original Author: [Ryunosuke Saiki](mailto:saikiryunosuke@gmail.com)
 
 This package was created using [Cookiecutter] and the
 [papaemmelab/cookiecutter-toil] project template.
