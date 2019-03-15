@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly GLOBAL_PROBE=$1
 readonly TARGET=$2
 readonly TAG=$3

@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly OUTPUTDIR=$1
 readonly ID=$2
 
@@ -35,7 +35,7 @@ ${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${O
 MAX=`cut -f 3 ${INPUT} | sort -n | tail -n 1`
 if [ ${MAX%.*} -gt 3 ]; then
 	readonly OUTPUT_SCALED=${OUTPUTDIR}/${ID}/${ID}_scaled.pdf
-	
+
 	echo "${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_SCALED} < ${COMMAND_CNACS}/subscript_target/plot_scaled.R"
 	${R_PATH} --vanilla --slave --args ${INPUT}.tmp ${SEGMENT}.tmp ${CENTROMERE} ${OUTPUT_SCALED} < ${COMMAND_CNACS}/subscript_target/plot_scaled.R
 fi

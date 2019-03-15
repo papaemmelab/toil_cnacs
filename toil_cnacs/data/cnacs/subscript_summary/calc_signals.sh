@@ -1,7 +1,7 @@
 #! /bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly INPUT=$1
 readonly OUTPUT=$2
 readonly GENE_INFO=$3

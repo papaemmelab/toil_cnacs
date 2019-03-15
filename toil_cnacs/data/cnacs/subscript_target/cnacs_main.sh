@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly OUTPUTDIR=$1
 readonly BAF_INFO=$2
 readonly BAF_FACTOR=$3

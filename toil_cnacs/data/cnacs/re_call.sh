@@ -1,7 +1,7 @@
 #! /bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 write_usage() {
 	echo ""
 	echo "Usage: `basename $0` [options] <tag of an input directory> <tag of control samples> <BED file of probes> [<config>]"
@@ -164,19 +164,19 @@ qsub -soft -l ljob,lmem -v CONFIG=${CONFIG} -t 1-${FILECOUNT}:1 -hold_jid ${CNAC
 ##### MAIN (MEAN DEPTH FOR EACH GENE) #####
 
 if [ ${MODE} == "Exome-seq" ]; then
-	
+
 	readonly ALL_DEPTH_GENE=${CNACSDIR}/control/${CONTROL}/stats/all_gene_depth.txt
 	check_file_exists ${ALL_DEPTH_GENE}
-	
+
 	# filter out low quality probes
 	# make appropriate signals for control from control samples
 	# calculate signals for CBS
 	# perform CBS
-	
+
 	echo "qsub -soft -l ljob,lmem -v CONFIG=${CONFIG} -t 1-${FILECOUNT}:1 -hard -l s_vmem=2G,mem_req=2G -N ${CNACS_MAIN_GENE} ${LOGSTR} ${COMMAND_CNACS}/subscript_exome/cnacs_main_gene.sh ${OUTPUTDIR} ${BAF_INFO} ${BAF_FACTOR} ${BAF_FACTOR_ALL} ${ALL_DEPTH_GENE} ${REP_TIME}"
 	qsub -soft -l ljob,lmem -v CONFIG=${CONFIG} -t 1-${FILECOUNT}:1 -hard -l s_vmem=2G,mem_req=2G -N ${CNACS_MAIN_GENE} ${LOGSTR} ${COMMAND_CNACS}/subscript_exome/cnacs_main_gene.sh ${OUTPUTDIR} ${BAF_INFO} ${BAF_FACTOR} ${BAF_FACTOR_ALL} ${ALL_DEPTH_GENE} ${REP_TIME}
-	
-	
+
+
 	# draw a plot
 	echo "qsub -soft -l ljob,lmem -v CONFIG=${CONFIG} -t 1-${FILECOUNT}:1 -hold_jid ${CNACS_MAIN_GENE} -N ${PLOT_GENE} ${LOGSTR} ${COMMAND_CNACS}/subscript_exome/plot_gene.sh ${OUTPUTDIR}"
 	qsub -soft -l ljob,lmem -v CONFIG=${CONFIG} -t 1-${FILECOUNT}:1 -hold_jid ${CNACS_MAIN_GENE} -N ${PLOT_GENE} ${LOGSTR} ${COMMAND_CNACS}/subscript_exome/plot_gene.sh ${OUTPUTDIR}

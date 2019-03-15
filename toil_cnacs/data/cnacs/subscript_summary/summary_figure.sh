@@ -1,7 +1,7 @@
 #! /bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly INPUTDIR=$1
 readonly TAG=$2
 readonly INPUT=$3

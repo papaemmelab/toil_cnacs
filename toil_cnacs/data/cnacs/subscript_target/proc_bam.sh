@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly ORGDIR=$1
 readonly PROBE_BED=$2
 readonly SEQBAM=$3
@@ -24,11 +24,11 @@ readonly METRICS=${ORGDIR}/${ID}/tmp/metrics.txt
 
 # mark duplicate reads
 echo "java MarkDuplicates.jar"
-${JAVAPATH}/java -Xms7g -Xmx7g -Djava.io.tmpdir=${TEMPDIR} -jar ${PICARD_PATH} MarkDuplicates INPUT=${SEQBAM} OUTPUT=${BAMmarkdup} METRICS_FILE=${METRICS} VALIDATION_STRINGENCY=SILENT MAX_RECORDS_IN_RAM=${RECORDS_IN_RAM}
+${JAVAPATH}/java -Xms7g -Xmx7g -Djava.io.tmpdir=${TMPDIR} -jar ${PICARD_PATH} MarkDuplicates INPUT=${SEQBAM} OUTPUT=${BAMmarkdup} METRICS_FILE=${METRICS} VALIDATION_STRINGENCY=SILENT MAX_RECORDS_IN_RAM=${RECORDS_IN_RAM}
 check_error $?
 
 echo "java BuildBamIndex.jar"
-${JAVAPATH}/java -Xms7g -Xmx7g -Djava.io.tmpdir=${TEMPDIR} -jar ${PICARD_PATH} BuildBamIndex INPUT=${BAMmarkdup} VALIDATION_STRINGENCY=SILENT MAX_RECORDS_IN_RAM=${RECORDS_IN_RAM}
+${JAVAPATH}/java -Xms7g -Xmx7g -Djava.io.tmpdir=${TMPDIR} -jar ${PICARD_PATH} BuildBamIndex INPUT=${BAMmarkdup} VALIDATION_STRINGENCY=SILENT MAX_RECORDS_IN_RAM=${RECORDS_IN_RAM}
 check_error $?
 
 readonly CHR=`${SAMTOOLS_PATH}/samtools view -H ${BAMmarkdup} | cut -f 2 | cut -d ":" -f 2 | head -n 2 | tail -n 1`

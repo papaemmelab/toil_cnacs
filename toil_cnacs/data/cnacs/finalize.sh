@@ -1,7 +1,7 @@
 #! /bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 
 write_usage() {
 	echo ""

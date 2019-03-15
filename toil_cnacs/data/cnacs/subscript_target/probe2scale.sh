@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly ORGDIR=$1
 readonly BAF_FACTOR=$2
 readonly SEQBAM=$3

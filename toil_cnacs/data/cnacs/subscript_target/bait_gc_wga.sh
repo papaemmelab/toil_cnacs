@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly ORGDIR=$1
 readonly PROBE_BED=$2
 readonly WGA_LENGTH=$3

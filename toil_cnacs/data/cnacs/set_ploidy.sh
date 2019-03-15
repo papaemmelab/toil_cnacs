@@ -1,7 +1,7 @@
 #! /bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 write_usage() {
 	echo ""
 	echo "Usage: `basename $0` [options] <tag of an input directory> <a name of a sample> <region> <ploidy> [<config>]"

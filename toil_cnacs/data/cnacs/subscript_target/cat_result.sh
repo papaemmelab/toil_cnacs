@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 readonly OUTPUTDIR=$1
 
 TAG="${OUTPUTDIR##*/}"

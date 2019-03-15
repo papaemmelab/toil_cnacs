@@ -1,7 +1,7 @@
 #! /bin/bash
 #$ -S /bin/bash
 #$ -cwd
-
+set -eu
 write_usage() {
 	echo ""
 	echo "Usage: `basename $0` <information on global probes> <BED file of targeted regions> <tag> [<config>]"
