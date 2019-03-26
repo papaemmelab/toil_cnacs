@@ -192,7 +192,7 @@ def process_parsed_options(options, step):
         options.pool_samp = valid_samples
 
     if step == "finalise_pool":
-        options.probe_bed = join(options.pool_dir, "probe.bed")
+        options.probe_bed = join(options.outdir, "probe.bed")
         if not os.path.isfile(options.probe_bed):
             raise exceptions.MissingDataError(options.probe_bed + " is missing.")
 
