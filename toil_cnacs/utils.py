@@ -1,5 +1,7 @@
 """toil_cnacs utils."""
 
+from __future__ import print_function
+
 import os
 import tarfile
 
@@ -31,3 +33,16 @@ def tar_dir(output_path, source_dir):
 def make_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+
+def copyfix_bed(probe_bed, outdir):
+    with open(probe_bed, "r") as infile, open(
+        os.path.join(outdir, "probe.bed"), "w"
+    ) as outfile:
+        for line in infile:
+            line = line.strip()
+            if len(line.split("\t")) >= 3:
+                if line[:3] == "chr":
+                    print(line, file=outfile)
+                else:
+                    print("chr" + line, file=outfile)

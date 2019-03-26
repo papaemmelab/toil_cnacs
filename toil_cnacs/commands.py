@@ -10,6 +10,9 @@ def run_toil(toil_options, step):
     """Run toil pipeline give an options namespace."""
     if step == "generate_pool":
         utils.make_dir(toil_options.outdir)
+        utils.copyfix_bed(toil_options.probe_bed, toil_options.outdir)
+        toil_options.probe_bed = join(toil_options.outdir, "probe.bed")
+
         head = jobs.BaseJob(runtime=89, cores=1, memory="1G", options=toil_options)
         baitsize = jobs.BaitSize(runtime=89, cores=1, memory="1G", options=toil_options)
         preprocess = jobs.Preprocess(
@@ -51,7 +54,9 @@ def run_toil(toil_options, step):
             proc_bam.addChild(divide_bed)
             proc_bam.addChild(count_dup)
 
-        process_node = jobs.BaseJob(runtime=89, cores=1, memory="1G", options=toil_options)
+        process_node = jobs.BaseJob(
+            runtime=89, cores=1, memory="1G", options=toil_options
+        )
         baitsize.addFollowOn(process_node)
         baf_node = jobs.BaseJob(runtime=89, cores=1, memory="1G", options=toil_options)
         for samp in toil_options.pool_samp:
@@ -64,7 +69,9 @@ def run_toil(toil_options, step):
                 cnacs_kwargs=cnacs_kwargs,
             )
             baf_node.addChild(bam2hetero)
-            gc_node = jobs.BaseJob(runtime=89, cores=1, memory="1G", options=toil_options)
+            gc_node = jobs.BaseJob(
+                runtime=89, cores=1, memory="1G", options=toil_options
+            )
             for quartile in [1, 2, 3, 4]:
                 cnacs_kwargs["quartile"] = quartile
                 correct_gc_ref = jobs.CorrectGCRef(

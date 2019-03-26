@@ -31,7 +31,7 @@ Notice its required that you use a different jobstore for each sub-command, plea
 
     toil_cnacs --help
 
-*Currently only Targeted Panels and hg19 bed and fasta files are supported*
+*Currently only Targeted Panels and hg19 fasta files are supported*
 *Bam files can be gr37 or hg19*
 
 Docker and Singularity are supported:
@@ -65,7 +65,7 @@ Example:
         --writeLogs {pool_dir}/toil_logs \
         --logFile {pool_dir}/toil_logs.txt \
         --outdir {pool_dir} \
-        --probe_bed {hg19 panel bed} \
+        --probe_bed {panel bed} \
         --fasta {hg19 reference fasta} \
         --pool_samp {normal1 bam} {normal1 gender} \
         --pool_samp {normal2 bam} {normal2 gender} \
@@ -85,7 +85,6 @@ in outdir/stats/threshold.txt
         --writeLogs {pool_dir}/toil_logs \
         --logFile {pool_dir}/toil_logs.txt \
         --outdir {pool_dir} \
-        --probe_bed {hg19 panel bed} \
         --fasta {hg19 reference fasta}
 
 ### Run CN Analysis
@@ -101,7 +100,6 @@ to the location of your pool output directory
         --logFile {outdir}/toil_logs.txt \
         --outdir {outdir} \
         --pool_dir {pool_dir} \
-        --probe_bed {hg19 panel bed} \
         --fasta {hg19 reference fasta} \
         --samp {tumor1 bam}
 

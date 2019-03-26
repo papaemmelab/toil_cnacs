@@ -50,14 +50,14 @@ def get_parser(step):
         type=click.Path(exists=True, file_okay=True, readable=True, resolve_path=True),
     )
 
-    settings.add_argument(
-        "--probe_bed",
-        help="capture bed file (hg19)",
-        required=True,
-        type=click.Path(file_okay=True, readable=True, resolve_path=True),
-    )
-
     if step == "generate_pool":
+        settings.add_argument(
+            "--probe_bed",
+            help="capture bed file",
+            required=True,
+            type=click.Path(file_okay=True, readable=True, resolve_path=True),
+        )
+
         settings.add_argument(
             "--pool_samp",
             help="Normal Sample for Pool bam and sex, space seperated: --pool_samp bam sex"
@@ -191,7 +191,13 @@ def process_parsed_options(options, step):
         ]
         options.pool_samp = valid_samples
 
+    if step == "finalise_pool":
+        options.probe_bed = join(options.pool_dir, "probe.bed")
+        if not os.path.isfile(options.probe_bed):
+            raise exceptions.MissingDataError(options.probe_bed + " is missing.")
+
     if step == "run":
+        options.probe_bed = join(options.pool_dir, "probe.bed")
         options.snp_bed = join(options.pool_dir, "overlapping_snp.bed")
         options.rep_time = join(options.pool_dir, "repli_time.txt")
         options.bait_fa = join(options.pool_dir, "sequence.fa")
@@ -200,6 +206,7 @@ def process_parsed_options(options, step):
         options.baf_factor = join(options.pool_dir, "stats", "baf_factor.bed")
         options.all_depth = join(options.pool_dir, "stats", "all_depth.txt")
         for f in [
+            options.probe_bed,
             options.snp_bed,
             options.rep_time,
             options.bait_fa,
