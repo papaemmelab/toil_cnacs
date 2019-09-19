@@ -109,7 +109,9 @@ Contributions are welcome, and they are greatly appreciated, check our [contribu
 
 ## Credits
 
-CNACS Original Author: [Ryunosuke Saiki](mailto:saikiryunosuke@gmail.com)
+CNACS core developers: [Yusuke Shiozawa](mailto:shiozawa-tky@umin.ac.jp)  and [Ryunosuke Saiki](.github/RSaikiRSaiki)
+
+CNACS have been described in (Yoshizato et al, Blood 2017)(http://www.bloodjournal.org/content/early/2017/02/21/blood-2016-12-754796?sso-checked=true)
 
 This package was created using [Cookiecutter] and the
 [papaemmelab/cookiecutter-toil] project template.
