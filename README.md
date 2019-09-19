@@ -109,9 +109,9 @@ Contributions are welcome, and they are greatly appreciated, check our [contribu
 
 ## Credits
 
-CNACS core developers: [Yusuke Shiozawa](mailto:shiozawa-tky@umin.ac.jp)  and [Ryunosuke Saiki](.github/RSaikiRSaiki)
+CNACS core developers: [Yusuke Shiozawa](mailto:shiozawa-tky@umin.ac.jp) and [Ryunosuke Saiki]
 
-CNACS have been described in (Yoshizato et al, Blood 2017)(http://www.bloodjournal.org/content/early/2017/02/21/blood-2016-12-754796?sso-checked=true)
+CNACS have been described in [Yoshizato et al, Blood 2017]
 
 This package was created using [Cookiecutter] and the
 [papaemmelab/cookiecutter-toil] project template.
@@ -122,6 +122,9 @@ This package was created using [Cookiecutter] and the
 [cookiecutter]: https://github.com/audreyr/cookiecutter
 [papaemmelab/cookiecutter-toil]: https://github.com/papaemmelab/cookiecutter-toil
 [`--batchSystem`]: http://toil.readthedocs.io/en/latest/developingWorkflows/batchSystem.html?highlight=BatchSystem
+[Yoshizato et al, Blood 2017]: http://www.bloodjournal.org/content/early/2017/02/21/blood-2016-12-754796?sso-checked=true
+[Ryunosuke Saiki]: https://github.com/RSaikiRSaiki
+
 
 <!-- Badges -->
 [docker_base]: https://hub.docker.com/r/papaemmelab/toil_cnacs
