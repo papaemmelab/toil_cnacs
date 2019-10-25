@@ -34,7 +34,7 @@
             "tox==2.9.1"
         ]
     },
-    "author": "Ryunosuke Saiki, Max F. Levine",
+    "author": "Yusuke Shiozawa, Ryunosuke Saiki, Max F. Levine",
     "keywords": [],
     "license": "BSD",
     "name": "toil_cnacs",
